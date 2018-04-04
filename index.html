@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Bsc Thesis</title>
+	<meta name="author" content="Hang Barnabás" />
+	<meta name="description" content="neural network demo frontend" />
+	<meta name="keywords"  content="nn, pte, ttk, keras" />
+	<meta name="Resource-type" content="Document" />
+	<link rel="stylesheet" type="text/css" href="jquery.fullPage.css" />
+	<link rel="stylesheet" type="text/css" href="style.css" />
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+	<script type="text/javascript" src="scrolloverflow.js"></script>
+	<script type="text/javascript" src="jquery.fullPage.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
+
+</head>
+<body>
+
+<div id="fullpage">
+	<div class="section active" id="section0">
+				<h1>BSc Thesis</h1>
+				<h3>Created</h3>
+				<h3>By</h3>
+				<h2>Hang Barnabás</h2>
+				 <canvas id=c></canvas>
+    </div>
+	<div class="section" id="section1">
+
+	    <div class="slide active"><h1>detects languages:</h1></div>
+	    <div class="slide"><h1>... english</h1></div>
+	    <div class="slide"><h1>... hungarian</h1></div>
+	    <div class="slide"><h1>... german</h1></div>
+		<div class="slide"><h1>... and french!</h1></div>
+	</div>
+	<div class="section" id="section2">
+		<div id="detectText"><h1>Give it a try!</h1></div>
+		<div style="max-width: 50%; margin: auto;"> 
+		<input type="text" class="form-control"name="fname" id="fname" maxlength="200" placeholder="Type a full sentence here.">
+		<button id="button" class="btn btn-info" type="button">Detect language!</button>
+		</div>
+		
+	</div>
+	<div class="section" id="section3">
+		<h1>latest predictions</h1>
+		 <center><table id="excelDataTable" class="table table-hover" style="max-width: 80%;"></table></center>
+	</div>
+	
+	<div class="section" id="section4">
+		<h1>Historical data</h1>
+        <center>
+            <div style="max-width: 40%;">
+                <canvas id="myChart" width="400" height="400"></canvas>
+            </div>
+        </center>
+
+
+	</div>
+</div>
+
+<script type="text/javascript">
+
+		
+
+		function loadStuff() {
+			loadChart();
+			loadGrid();
+			console.log("ONLOAD");
+		}
+
+		$(window).on('load', function() {
+			loadChart();
+			loadGrid();
+			  console.log('All assets are loaded')
+		})
+
+		function loadChart() {
+			var ctx = document.getElementById("myChart");
+			$.ajax({type: "GET",
+                		url: "http://localhost:8888/diagramdata",
+                		success:function(result){
+				console.log("diagramdata fetched: "+result);
+				var diagramArray = []
+				diagramArray[0] = result.diagram.good;
+				diagramArray[1] = result.diagram.bad;
+				//datax.datasets.data = diagramArray;
+
+				datax = {
+					datasets: [{
+						data: diagramArray, // dummy data
+				backgroundColor: ["#4BBFC3", "#205276"],
+					}],
+					labels: [
+						'Valid predictions',
+						'Invalid predictions'
+					],
+				};
+				
+				var myPieChart = new Chart(ctx,{
+					type: 'pie',
+					data: datax,
+				});
+			
+			}});
+			
+		}
+		
+		$(document).ready(function() {
+			$('#fullpage').fullpage({
+				sectionsColor: ['#f2f2f2', '#4BBFC3', '#7BAABE', 'whitesmoke', '#ccddff']
+			});
+		});
+	
+	
+	var enableSubmit = function(ele) {
+   	 $(ele).removeAttr("disabled");
+	}
+	
+	var myList = [];
+	
+	var prediction = "";
+	
+	function loadGrid(){
+	$.ajax({type: "GET",
+                url: "http://localhost:8888/list",
+		//		url: 'https://reqres.in/api/users?page=2',
+                success:function(result){
+					console.log(result);
+					myList = result.data;
+					$("#excelDataTable").empty();
+					buildHtmlTable('#excelDataTable');
+        }});
+	}
+	
+	
+    $(document).ready(function(){	
+      $("#button").click(function(e){
+		var that = this;
+		$(this).attr("disabled", true);
+		setTimeout(function() { enableSubmit(that) }, 3000);
+		
+		
+		if (document.getElementById('fname').value=="") {
+			alert('Error emtpy input field!');
+			return;
+		}
+		
+        e.preventDefault();
+		text = document.getElementById('fname').value
+		$.ajax({type: "GET",
+		async: false,
+                url: "http://localhost:8888/pvalid/"+text,
+		//		url: "https://reqres.in/api/users/"+text,
+                success:function(result){
+					//console.log(result);
+					prediction = result.data.language;
+					document.getElementById("detectText").innerHTML="<h1>"+prediction+" language detected<h1>"; 
+					setTimeout(function() {
+					document.getElementById("detectText").innerHTML="<h1>Give it a try!<h1>";
+					document.getElementById('fname').value = "";
+					}, 3000);	
+        }});
+		
+	loadChart();
+	loadGrid();
+		
+	  });
+    });
+	
+	
+
+function buildHtmlTable(selector) {
+  var columns = addAllColumnHeaders(myList, selector);
+
+  for (var i = 0; i < myList.length; i++) {
+    var row$ = $('<tr/>');
+    for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+      var cellValue = myList[i][columns[colIndex]];
+      if (cellValue == null) cellValue = "";
+      row$.append($('<td/>').html(cellValue));
+    }
+    $(selector).append(row$);
+  }
+}
+
+function addAllColumnHeaders(myList, selector) {
+  var columnSet = [];
+  var headerTr$ = $('<tr/>');
+
+  for (var i = 0; i < myList.length; i++) {
+    var rowHash = myList[i];
+    for (var key in rowHash) {
+      if ($.inArray(key, columnSet) == -1) {
+        columnSet.push(key);
+        headerTr$.append($('<th/>').html(key));
+      }
+    }
+  }
+  $(selector).append(headerTr$);
+
+  return columnSet;
+}
+</script>
+ <script src="index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+https://codepen.io/towc/pen/wGjXGY - https://codepen.io/towc/
+http://www.chartjs.org/ - chart
+https://github.com/alvarotrigo/fullpage.js/ - template
