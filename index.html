@@ -79,6 +79,10 @@
 		})
 
 		function loadChart() {
+
+            $('#myChart').remove(); // this is my <canvas> element
+            $('#chartdiv').append('<canvas id="myChart" width="400" height="400"></canvas>');
+
 			var ctx = document.getElementById("myChart");
 			$.ajax({type: "GET",
                 		url: "http://localhost:8888/diagramdata",
